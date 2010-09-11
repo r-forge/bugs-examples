@@ -69,5 +69,3 @@ adj = c(
 ),
 sumNumNeigh = 212
 )
-
-
