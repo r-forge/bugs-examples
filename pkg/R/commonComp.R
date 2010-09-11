@@ -28,7 +28,7 @@ read.bugsdata <- function(file)
 fixDirichlet <- function(modelFile, pattern)
 {
     ## Substitute "ddirich" for "ddirch" in model file.
-    
+
     m <- readLines(modelFile, warn=FALSE)
     if (length(grep("ddirch", m)) > 0) {
         modelFile <- tempfile(pattern)
@@ -48,9 +48,17 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
     if (is.null(useWINE)) {
         useWINE <- .Platform$OS.type == "unix"
     }
-    
+    if (useWINE) {
+        wine.dir <- getOption("wineBin")
+        if (is.null(wine.dir))
+            stop("Cannot use wine: option \"wineBin\" not set")
+        bugs.dir <- getOption("WinBUGSDir")
+        if (is.null(bugs.dir))
+            stop("Cannot use wine: option \"WinBUGSDir\" not set")
+    }
+
     runtime <-
-        system.time(bugs(data=data,
+        system.time(bugs(data="data.txt",
                          inits=inits,
                          parameters.to.save=example$parameters,
                          model.file=modelFile,
@@ -60,16 +68,16 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
                          n.burnin=example$nBurnin,
                          n.thin=example$nThin,
                          clearWD=FALSE,
-                         program="WinBugs",
+                         program="WinBUGS",
                          codaPkg=TRUE,
                          working.directory=wkDir,
-                         bugs.directory = getOption("WinBUGSDir"),
+                         bugs.directory = bugs.dir,
                          useWINE=useWINE,
-                         WINE=file.path(getOption("wineBin"),"wine"),
+                         WINE=file.path(wine.dir,"wine"),
                          newWINE=useWINE,
-                         WINEPATH=file.path(getOption("wineBin"), "winepath"))
+                         WINEPATH=file.path(wine.dir, "winepath"))
                     )
-    
+
     codafiles <- file.path(wkDir, paste("coda",1:n.chains,".txt",sep=""))
     ans <- vector("list", n.chains)
     for (i in seq_along(ans)) {
@@ -79,7 +87,7 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
             ans <- NULL
             break
         }
-    }   
+    }
 
     out.coda <- if(is.null(ans)){
         NULL
@@ -97,34 +105,34 @@ writeTemplate <- function(scriptfile, example, n.chains)
     ## Writes a template script file for OpenBUGS. The variable
     ## $TEMPDIR, which gives the working directory, is substituted in
     ## the call to batchBUGS
-  
+
     nAdapt <- max(0, example$nBurnin - 1)
     nBurn <- ceiling(example$nBurnin/example$nThin)
     nThin <- example$nThin
     nUpdate <-ceiling((example$nIter - nBurn)/nThin)
     params <- example$parameters
     sep <- .Platform$file.sep
-    
+
     initfiles <- file.path("$TEMPDIR/", paste("inits",1:n.chains,".txt",sep=""))
-    
+
     cat("modelCheck('$TEMPDIR",sep,"model.txt')\n",
         "modelData('$TEMPDIR",sep,"data.txt')\n",
         "modelCompile(",n.chains,")\n",
         paste("modelInits('",initfiles,"',",1:n.chains,")\n", sep=""),
         "modelGenInits()\n",
-        "modelSetAP('chain graph block hybrid'",",",nAdapt,")\n", 
-        "modelSetAP('normal block hybrid'",",",nAdapt,")\n", 
-        "modelSetAP('logit/log-linear block hybrid'",",",nAdapt,")\n", 
-        "modelSetAP('normal blcok hybrid'",",",nAdapt,")\n", 
-        "modelSetAP('block hybrid'",",",nAdapt,")\n", 
-        "modelSetAP('non conjugate dirichlet'",",",nAdapt,")\n", 
-        "modelSetAP('slice'",",",nAdapt,")\n", 
-        "modelSetAP('random walk (delayed) metropolis'",",",nAdapt,")\n", 
-        "modelSetAP('random walk metropolis'",",",nAdapt,")\n", 
-        "modelSetAP('descrete metropolis'",",",nAdapt,")\n", 
-        "modelSetAP('hybrid metropolis'",",",nAdapt,")\n", 
-        "modelSetAP('over-relaxed metropolis'",",",nAdapt,")\n", 
-        "modelSetAP('descrete slice'",",",nAdapt,")\n", 
+        "modelSetAP('chain graph block hybrid'",",",nAdapt,")\n",
+        "modelSetAP('normal block hybrid'",",",nAdapt,")\n",
+        "modelSetAP('logit/log-linear block hybrid'",",",nAdapt,")\n",
+        "modelSetAP('normal blcok hybrid'",",",nAdapt,")\n",
+        "modelSetAP('block hybrid'",",",nAdapt,")\n",
+        "modelSetAP('non conjugate dirichlet'",",",nAdapt,")\n",
+        "modelSetAP('slice'",",",nAdapt,")\n",
+        "modelSetAP('random walk (delayed) metropolis'",",",nAdapt,")\n",
+        "modelSetAP('random walk metropolis'",",",nAdapt,")\n",
+        "modelSetAP('descrete metropolis'",",",nAdapt,")\n",
+        "modelSetAP('hybrid metropolis'",",",nAdapt,")\n",
+        "modelSetAP('over-relaxed metropolis'",",",nAdapt,")\n",
+        "modelSetAP('descrete slice'",",",nAdapt,")\n",
         "modelUpdate(",nBurn,",",nThin,")\n",
         paste("samplesSet('", params, "')\n", sep=""),
         "modelUpdate(",nUpdate,",",nThin,")\n",
@@ -143,22 +151,27 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
     writeTemplate(scriptfile, example, n.chains)
 
     modelFile <- fixDirichlet(modelFile, example$name)
-    
+
     useWINE <- getOption("useWINE")
     if (is.null(useWINE)) {
         ### FIXME: need a better way of identifying mac
         useWINE <- (.Platform$OS.type == "unix" &&
                     .Platform$pkgType == "mac.binary")
     }
+    if (useWINE) {
+        if(is.null(getOption("wineBin"))) {
+            stop("Cannot use wine: wine binary not found")
+        }
+    }
 
     runtime <-
-        system.time(ans <- 
+        system.time(ans <-
                     batchBUGS(modelFile,
-                              modelData, 
+                              modelData,
                               inits,
                               scriptfile,
                               baseDir=file.path(getwd(),"OpenBUGS"),
-                              workName=example$name, 
+                              workName=example$name,
                               index= 0, codaStem=TRUE,
                               delWorkFolders=FALSE,
                               stripComments=FALSE,
@@ -179,14 +192,16 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
     return(list("coda" = out.coda, "runtime" = runtime, engine="OpenBUGS",
                 "name" = example$name))
 }
-                               
+
 runExample <- function(example, engine=c("OpenBUGS", "WinBUGS"), exDir)
 {
     engine <- match.arg(engine)
-    
+
     ## Set up working directory
-    wkDir <- file.path(getwd(), engine, example$name)      
-    dir.create(wkDir, recursive=TRUE, showWarnings=FALSE)
+    wkDir <- file.path(getwd(), engine, example$name)
+    if (file.exists(wkDir))
+        unlink(wkDir, recursive = TRUE)
+    dir.create(wkDir, recursive = TRUE, showWarnings = FALSE)
 
     ## Find model files
     if (missing(exDir))
@@ -214,10 +229,10 @@ writeResults <- function(out)
     ## summarize results and save output
 
     mkFile <- function(suffix) {
-        wkDir <- file.path(getwd(), out$BUGS, out$name)    
+        wkDir <- file.path(getwd(), out$BUGS, out$name)
         file.path(wkDir, paste(out$name, ".", suffix, sep=""))
     }
-    
+
     if(is.null(out$coda)) {
         write("coda file creation failed", file=mkFile("fail.txt"))
     }

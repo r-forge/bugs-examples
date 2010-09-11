@@ -13,3 +13,4 @@
 		delta.new ~ dt(d, tau, 4)
 		sigma <- 1 / sqrt(tau)
 }
+
