@@ -65,15 +65,15 @@ batchBUGS <- function(modelFile, data, inits=NULL, cmdTemplate,
 
     ## creates the script file
     ## fill in the working directory name
-    cmdFileTemplate <- readLines(bugsCmdTemplate, n = -1)
+    cmdFileTemplate <- readLines(cmdTemplate, n = -1)
     cmdFileLines <- gsub("\\$TEMPDIR", BugsWorkDir, cmdFileTemplate)
     cmdFileLines <- gsub("\\$TEMPDIR",
                          native2win(BugsWorkDir, useWINE = useWINE,
                                     newWINE = newWINE, WINEPATH = WINEPATH),
                          cmdFileTemplate)
     ## if a seed was specified, replace in cmd script
-    if (!missing(bugsSeed)){
-        cmdFileLines <- gsub("$SEED", bugsSeed, cmdFileLines)
+    if (!missing(seed)){
+        cmdFileLines <- gsub("$SEED", seed, cmdFileLines)
     }
     bugsCmdFile <- file.path(BugsWorkDir, "bugsCmds.txt")
     writeLines(cmdFileLines, bugsCmdFile)

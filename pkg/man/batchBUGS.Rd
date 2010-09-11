@@ -204,14 +204,14 @@ model {
 
   The \code{batchBUGS} code includes the \code{bugsData},
   \code{bugsInits}, \code{write.datafile}, and \code{formatdata}
-  functions from the \link{BRugs} package.  It includes the
+  functions from the \pkg{BRugs} package.  It includes the
   \code{winedriveMap}, \code{winedriveTr}, \code{winedriveRTr},
   \code{win2native}, and \code{native2win}, functions from the
-  \link{R2WinBUGS} package.
+  \pkg{R2WinBUGS} package.
   
 }
 \seealso{
-  \code{\link{coda},\link{read.openbugs}}
+  \code{\link{read.openbugs}}
 }
 
 \examples{

@@ -9,4 +9,5 @@ Description: Allows different MCMC engines using the BUGS language to
              be compared on a set of standard examples.
 License: GPL (==2)
 LazyLoad: yes
-Depends: coda, lattice, R2WinBUGS
+LazyData: yes
+Depends: coda, R2WinBUGS

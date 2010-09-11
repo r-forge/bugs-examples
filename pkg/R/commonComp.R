@@ -88,7 +88,7 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
         mcmc.list(ans)
     }
 
-    return(list("coda" = out.coda, "runtime" = runtime, BUGS="WinBUGS",
+    return(list("coda" = out.coda, "runtime" = runtime, engine="WinBUGS",
                 name = example$name))
 }
 
@@ -158,9 +158,9 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
                               inits,
                               scriptfile,
                               baseDir=file.path(getwd(),"OpenBUGS"),
-                              BugsWorkName=example$name, 
+                              workName=example$name, 
                               index= 0, codaStem=TRUE,
-                              delBugsWorkFolders=FALSE,
+                              delWorkFolders=FALSE,
                               stripComments=FALSE,
                               useWINE=useWINE,
                               WINE=file.path(getOption("wineBin"),"wine"),
@@ -173,14 +173,14 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
         NULL
     }
     else {
-        read.openbugs(ans[[2]])
+        read.openbugs(ans[[2]], quiet=TRUE)
     }
 
-    return(list("coda" = out.coda, "runtime" = runtime, BUGS="OpenBUGS",
+    return(list("coda" = out.coda, "runtime" = runtime, engine="OpenBUGS",
                 "name" = example$name))
 }
                                
-runExample <- function(example, engine=c("OpenBUGS", "WinBUGS"))
+runExample <- function(example, engine=c("OpenBUGS", "WinBUGS"), exDir)
 {
     engine <- match.arg(engine)
     
@@ -189,7 +189,9 @@ runExample <- function(example, engine=c("OpenBUGS", "WinBUGS"))
     dir.create(wkDir, recursive=TRUE, showWarnings=FALSE)
 
     ## Find model files
-    exDir <- system.file("examples", package="BUGSExamples")
+    if (missing(exDir))
+      exDir <- system.file("examples", package="BUGSExamples")
+
     modelFile <- file.path(exDir, paste(example$name, "model.txt", sep=""))
     dataFile <- file.path(exDir, paste(example$name, "data.txt", sep=""))
     initFile <- file.path(exDir, paste(example$name, "inits.txt", sep=""))
