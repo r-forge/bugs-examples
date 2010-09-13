@@ -47,6 +47,7 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
 
     useWINE <- getOption("useWINE")
     if (is.null(useWINE)) {
+        ## There is no native WinBUGS 1.4 on Unix
         useWINE <- .Platform$OS.type == "unix"
     }
     if (useWINE) {
@@ -58,7 +59,10 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
     if (is.null(bugs.dir))
         stop("Option \"WinBUGSDir\" not set")
 
-
+    nBurnin <- example$nBurnin
+    nSample <- example$nSample
+    nThin <- example$nThin
+    
     runtime <-
         system.time(bugs(data="data.txt",
                          inits=inits,
@@ -66,9 +70,9 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
                          model.file=modelFile,
                          DIC=FALSE,
                          n.chains=n.chains,
-                         n.iter=example$nSample + example$nBurnin,
-                         n.burnin=example$nBurnin,
-                         n.thin=example$nThin,
+                         n.iter=(nSample + nBurnin)*nThin,
+                         n.burnin=nBurnin*nThin,
+                         n.thin=nThin,
                          clearWD=FALSE,
                          program="WinBUGS",
                          codaPkg=TRUE,
@@ -157,9 +161,7 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
 
     useWINE <- getOption("useWINE")
     if (is.null(useWINE)) {
-        ### FIXME: need a better way of identifying mac
-        useWINE <- (.Platform$OS.type == "unix" &&
-                    .Platform$pkgType == "mac.binary")
+        useWINE <- FALSE
     }
     if (useWINE) {
         if(is.null(getOption("wineBin"))) {
@@ -256,6 +258,3 @@ writeResults <- function(out)
         dev.off()
     }
 }
-
-
-###options(error = expression(NULL)) # prevents stopping for errors when running in batch

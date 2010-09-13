@@ -1,6 +1,10 @@
 .onLoad <- function(pkg, lib)
 {
-
+    ## Always use WINE on Mac OS X
+    if (is.null(getOption("useWINE")) && Sys.info()[1] == "Darwin") {
+        options(useWINE = TRUE)
+    }
+    
     ## Find wine binary directory
 
     if (is.null(getOption("wineBin"))) {
