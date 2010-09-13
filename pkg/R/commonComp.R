@@ -41,6 +41,7 @@ fixDirichlet <- function(modelFile, pattern)
 runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
 {
     wkDir <- file.path(getwd(), "WinBUGS", example$name)
+    unlink(wkDir, recursive=TRUE)
     dir.create(wkDir, showWarnings=FALSE)
     file.copy(modelData, file.path(wkDir,"data.txt"), overwrite=TRUE)
 
@@ -52,10 +53,11 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
         wine.dir <- getOption("wineBin")
         if (is.null(wine.dir))
             stop("Cannot use wine: option \"wineBin\" not set")
-        bugs.dir <- getOption("WinBUGSDir")
-        if (is.null(bugs.dir))
-            stop("Cannot use wine: option \"WinBUGSDir\" not set")
     }
+    bugs.dir <- getOption("WinBUGSDir")
+    if (is.null(bugs.dir))
+        stop("Option \"WinBUGSDir\" not set")
+
 
     runtime <-
         system.time(bugs(data="data.txt",
@@ -64,7 +66,7 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
                          model.file=modelFile,
                          DIC=FALSE,
                          n.chains=n.chains,
-                         n.iter=example$nIter,
+                         n.iter=example$nSample + example$nBurnin,
                          n.burnin=example$nBurnin,
                          n.thin=example$nThin,
                          clearWD=FALSE,
@@ -81,7 +83,8 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
     codafiles <- file.path(wkDir, paste("coda",1:n.chains,".txt",sep=""))
     ans <- vector("list", n.chains)
     for (i in seq_along(ans)) {
-        ans[[i]] <- try(read.coda(codafiles[i], "codaindex.txt",
+        ans[[i]] <- try(read.coda(codafiles[i],
+                                  file.path(wkDir, "codaindex.txt"),
                                   quiet=TRUE), silent=TRUE)
         if (inherits(ans[[i]], "try-error")) {
             ans <- NULL
@@ -107,9 +110,9 @@ writeTemplate <- function(scriptfile, example, n.chains)
     ## the call to batchBUGS
 
     nAdapt <- max(0, example$nBurnin - 1)
-    nBurn <- ceiling(example$nBurnin/example$nThin)
     nThin <- example$nThin
-    nUpdate <-ceiling((example$nIter - nBurn)/nThin)
+    nBurn <- example$nBurnin
+    nUpdate <-example$nSample
     params <- example$parameters
     sep <- .Platform$file.sep
 

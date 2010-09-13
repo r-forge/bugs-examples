@@ -32,9 +32,11 @@ runExample(example, engine=c("OpenBUGS", "WinBUGS"), exDir)
     \item{name}{The name of the example}
     \item{parameters}{A character vector of the names of parameters to
       save}
-    \item{nIter}{Number of iterations after burnin}
-    \item{nBurnin}{Number of burnin iterations to discard}
-    \item{nThin}{Thinning interval to use for storing samples}
+    \item{nSample}{Number of samples to keep after burnin.}
+    \item{nBurnin}{Number of burnin iterations to discard.}
+    \item{nThin}{Thinning interval to use for the chain. Setting
+      \code{nThin} to  \code{n} instead of 1 increases the total run
+      time by \code{n} but does not affect the number of stored samples}
     \item{nChain}{Number of parallel chains to run}
   }
 
