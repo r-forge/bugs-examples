@@ -6,7 +6,7 @@
 \description{This function runs one of the standard BUGS examples stored
   in the \code{bugs-examples} package using its canonical name}
 \usage{
-runExample(example, engine=c("OpenBUGS", "WinBUGS"), exDir)
+runExample(example, engine=c("OpenBUGS", "WinBUGS", "JAGS"), exDir)
 }
 \arguments{
   \item{example}{A list containing sufficient information to run the 

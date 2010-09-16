@@ -107,6 +107,35 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
                 name = example$name))
 }
 
+dojags <- function(modelFile, modelData, inits, example, n.chains)
+{
+    nThin <- example$nThin
+    nBurnin <- example$nBurnin * nThin
+    nUpdate <- example$nSample * nThin
+    
+    m <- jags.model(modelFile, data=read.bugsdata(modelData),
+                    inits=inits, n.chains=n.chains, n.adapt=0)
+    ## Burnin
+    ## Following the lead of runOpenBUGS we take the whole of the
+    ## burnin period for adaptation.  For non-adapting models a call to
+    ## adapt will do nothing, so we have to explicitly call update to
+    ## complete the burnin
+    adapt(m, nBurnin, progress.bar="none")
+    if (m$iter() == 0)
+        update(m, nBurnin, progress.bar="none")
+    ## Sample monitoring
+    coda.samples(m, example$parameters, n.iter=nUpdate, thin = nThin,
+                 progress.bar="none")
+}
+    
+runJAGS <- function(modelFile, modelData, inits, example, n.chains)
+{
+    runtime <- system.time(out.coda <- dojags(modelFile, modelData, inits,
+                                              example, n.chains))
+    return(list("coda" = out.coda, "runtime" = runtime, engine="JAGS",
+                name = example$name))
+}
+
 writeTemplate <- function(scriptfile, example, n.chains)
 {
     ## Writes a template script file for OpenBUGS. The variable
@@ -198,33 +227,36 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
                 "name" = example$name))
 }
 
-runExample <- function(example, engine=c("OpenBUGS", "WinBUGS"), exDir)
+runExample <- function(example, engine=c("OpenBUGS", "WinBUGS", "JAGS"), exDir)
 {
     engine <- match.arg(engine)
 
     ## Set up working directory
-    wkDir <- file.path(getwd(), engine, example$name)
-    if (file.exists(wkDir))
-        unlink(wkDir, recursive = TRUE)
-    dir.create(wkDir, recursive = TRUE, showWarnings = FALSE)
-
+    if (engine != "JAGS") {
+        wkDir <- file.path(getwd(), engine, example$name)
+        if (file.exists(wkDir))
+            unlink(wkDir, recursive = TRUE)
+        dir.create(wkDir, recursive = TRUE, showWarnings = FALSE)
+    }
+    
     ## Find model files
     if (missing(exDir))
-      exDir <- system.file("examples", package="BUGSExamples")
+        exDir <- system.file("examples", package="BUGSExamples")
 
     modelFile <- file.path(exDir, paste(example$name, "model.txt", sep=""))
     dataFile <- file.path(exDir, paste(example$name, "data.txt", sep=""))
     initFile <- file.path(exDir, paste(example$name, "inits.txt", sep=""))
     inits <- if (file.exists(initFile)) {
-      list(read.bugsdata(file.path(initFile)))
+        list(read.bugsdata(file.path(initFile)))
     }
     else {
-      NULL
+        NULL
     }
 
     switch(engine,
            "WinBUGS"=runWinBUGS(modelFile, dataFile, inits, example, 1),
-           "OpenBUGS"=runOpenBUGS(modelFile, dataFile, inits, example, 1)
+           "OpenBUGS"=runOpenBUGS(modelFile, dataFile, inits, example, 1),
+           "JAGS"=runJAGS(modelFile, dataFile, inits, example, 1)
            )
 }
 

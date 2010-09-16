@@ -1,10 +1,11 @@
 	model
 	{
 	# transform collapsed data into full
-		for (i in 1 : I){
-			Y[i,1] <- 1  
-			Y[i,2] <- 0
-		}
+	# Expanded Y is in data file - MTP
+	#	for (i in 1 : I){
+	#		Y[i,1] <- 1  
+	#		Y[i,2] <- 0
+	#	}
 	# loop around strata with case exposed, control not exposed  (n10)
 		for (i in 1 : n10){ 
 			est[i,1] <- 1   

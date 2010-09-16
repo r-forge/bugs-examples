@@ -24,7 +24,7 @@ Beetles <- makeExample("Beetles", c("alpha", "beta", "rhat"))
 BiRats <- makeExample("BiRats", c("mu.beta", "sigma"))
 
 Biopsies <- makeExample("Biopsies",
-                        c("error[2,]", "error[3,]", "error[4,]", "p"))
+                        c("error[2,1:2]", "error[3,1:3]", "error[4,1:4]", "p"))
 
 Blockers <- makeExample("Blockers", c("d", "delta.new", "sigma"))
 
