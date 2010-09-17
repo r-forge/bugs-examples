@@ -38,6 +38,28 @@ fixDirichlet <- function(modelFile, pattern)
     return(modelFile)
 }
 
+fixTruncation <- function(modelFile, pattern)
+{
+    ## Substitute I(,) WinBUGS construct for the T(,) JAGS construct,
+    ## but only if the parameters of the distribution and the I(,)
+    ## construct are numeric constants.
+
+    ## Essentially this usage is restricted to truncating prior distributions,
+    ## e.g. X ~ dnorm(0.0, 1.0E-3) I(0, )
+    ## Under these circumstances, both I and T work the same way.
+    
+    m <- readLines(modelFile, warn=FALSE)
+    ## Note that this pattern matches expressions that are not valid
+    ## BUGS expressions, but the BUGS parser will take care of them
+    expr <- "(\\([ \\.0-9,Ee-]*\\))[[:space:]]*I[[:space:]]*(\\([ \\.0-9Ee-]*,[ \\.0-9Ee-]*\\))"
+    if (length(grep(expr, m)) > 0) {
+        modelFile <- tempfile(pattern)
+        m <- gsub(expr, "\\1 T\\2", m)
+        writeLines(m, modelFile)
+    }
+    return(modelFile)
+}
+
 runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
 {
     wkDir <- file.path(getwd(), "WinBUGS", example$name)
@@ -130,6 +152,8 @@ dojags <- function(modelFile, modelData, inits, example, n.chains)
     
 runJAGS <- function(modelFile, modelData, inits, example, n.chains)
 {
+    modelFile <- fixTruncation(modelFile, example$name)
+
     runtime <- system.time(out.coda <- dojags(modelFile, modelData, inits,
                                               example, n.chains))
     return(list("coda" = out.coda, "runtime" = runtime, engine="JAGS",
