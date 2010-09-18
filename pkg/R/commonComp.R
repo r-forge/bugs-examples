@@ -47,7 +47,7 @@ fixTruncation <- function(modelFile, pattern)
     ## Essentially this usage is restricted to truncating prior distributions,
     ## e.g. X ~ dnorm(0.0, 1.0E-3) I(0, )
     ## Under these circumstances, both I and T work the same way.
-    
+
     m <- readLines(modelFile, warn=FALSE)
     ## Note that this pattern matches expressions that are not valid
     ## BUGS expressions, but the BUGS parser will take care of them
@@ -84,7 +84,7 @@ runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
     nBurnin <- example$nBurnin
     nSample <- example$nSample
     nThin <- example$nThin
-    
+
     runtime <-
         system.time(bugs(data="data.txt",
                          inits=inits,
@@ -134,9 +134,16 @@ dojags <- function(modelFile, modelData, inits, example, n.chains)
     nThin <- example$nThin
     nBurnin <- example$nBurnin * nThin
     nUpdate <- example$nSample * nThin
-    
-    m <- jags.model(modelFile, data=read.bugsdata(modelData),
-                    inits=inits, n.chains=n.chains, n.adapt=0)
+
+    if (is.null(inits)) {
+        ##FIXME. Allow NULL initial values in jags.model
+        m <- jags.model(modelFile, data=read.bugsdata(modelData),
+                        n.chains=n.chains, n.adapt=0)
+    }
+    else {
+        m <- jags.model(modelFile, data=read.bugsdata(modelData),
+                        inits=inits, n.chains=n.chains, n.adapt=0)
+    }
     ## Burnin
     ## Following the lead of runOpenBUGS we take the whole of the
     ## burnin period for adaptation.  For non-adapting models a call to
@@ -149,10 +156,13 @@ dojags <- function(modelFile, modelData, inits, example, n.chains)
     coda.samples(m, example$parameters, n.iter=nUpdate, thin = nThin,
                  progress.bar="none")
 }
-    
+
 runJAGS <- function(modelFile, modelData, inits, example, n.chains)
 {
     modelFile <- fixTruncation(modelFile, example$name)
+    if (any(example$parameters == "deviance")) {
+        load.module("dic")
+    }
 
     runtime <- system.time(out.coda <- dojags(modelFile, modelData, inits,
                                               example, n.chains))
@@ -262,7 +272,7 @@ runExample <- function(example, engine=c("OpenBUGS", "WinBUGS", "JAGS"), exDir)
             unlink(wkDir, recursive = TRUE)
         dir.create(wkDir, recursive = TRUE, showWarnings = FALSE)
     }
-    
+
     ## Find model files
     if (missing(exDir))
         exDir <- system.file("examples", package="BUGSExamples")

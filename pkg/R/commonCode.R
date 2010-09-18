@@ -64,12 +64,10 @@ HepatitisME <- makeExample("HepatitisME", c("alpha0", "beta0", "gamma",
 
 Hepatitis <- makeExample("Hepatitis", c("alpha0", "beta0", "gamma", "sigma"))
 
-Hips2 <- makeExample("Hips2", c("BL", "BQ", "C", "mean.BL", "mean.BQ","mean.C"),
-                     nSample=50000, nBurnin=10000, nThin=2)
+Hips2 <- makeExample("Hips2", c("BL", "BQ", "C", "mean.BL", "mean.BQ","mean.C"))
 
 Hips3 <- makeExample("Hips3", c("BL", "BQ", "C", "mean.BL", "mean.BQ",
-                                "mean.C", "var.BL", "var.BQ","var.C"),
-                     nSample=50000, nThin=2, nBurnin=10000)
+                                "mean.C", "var.BL", "var.BQ","var.C"))
 
 Ice <- makeExample("Ice",c("logRR", "sigma"), nSample=10000, nThin=10)
 

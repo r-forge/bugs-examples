@@ -4,7 +4,8 @@
 			y[i] ~ dbin(P[state1[i]], t[i])
 			state[i] ~ dbern(theta)
 			state1[i] <- state[i] + 1   
-			t[i] <- x[i] + y[i]              
+                        #Data transformation already in data file - MTP
+			#t[i] <- x[i] + y[i]              
 			prop[i] <- P[state1[i]]       
 		}
 		P[1] <- p 
