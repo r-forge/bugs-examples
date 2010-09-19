@@ -277,7 +277,15 @@ runExample <- function(example, engine=c("OpenBUGS", "WinBUGS", "JAGS"), exDir)
     if (missing(exDir))
         exDir <- system.file("examples", package="BUGSExamples")
 
-    modelFile <- file.path(exDir, paste(example$name, "model.txt", sep=""))
+    ## Some models need to be rewritten for JAGS syntax, e.g. if they
+    ## contain data transformations, truncation, or censoring. 
+    jmodel <- file.path(exDir, paste(example$name, "model-jags.txt", sep=""))
+    modelFile <- if (engine == "JAGS" && file.exists(jmodel)) {
+        jmodel
+    }
+    else {
+        file.path(exDir, paste(example$name, "model.txt", sep=""))
+    }
     dataFile <- file.path(exDir, paste(example$name, "data.txt", sep=""))
     initFile <- file.path(exDir, paste(example$name, "inits.txt", sep=""))
     inits <- if (file.exists(initFile)) {
