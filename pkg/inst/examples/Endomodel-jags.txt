@@ -1,4 +1,4 @@
-	model
+	data
 	{
 	# transform collapsed data into full
 		for (i in 1 : I){
@@ -26,6 +26,9 @@
 			est[i,2] <- 0
 		}
 
+	}
+	model
+	{
 	# PRIORS
 		beta ~ dnorm(0,1.0E-6) ;     
 	  

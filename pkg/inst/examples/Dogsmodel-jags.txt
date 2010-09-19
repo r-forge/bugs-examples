@@ -1,3 +1,11 @@
+	data
+	{
+		for (i in 1 : Dogs) {
+			for (j in 2 : Trials) {
+				y[i, j] <- 1 - Y[i, j]
+			}
+		}
+	}
 	model
 	{
 		for (i in 1 : Dogs) {
@@ -6,12 +14,11 @@
 				xa[i, j] <- sum(Y[i, 1 : j - 1])
 				xs[i, j] <- j - 1 - xa[i, j]
 				log(p[i, j]) <- alpha * xa[i, j] + beta * xs[i, j]
-				y[i, j] <- 1 - Y[i, j]
 				y[i, j] ~ dbern(p[i, j])
 			}
 		} 
-		alpha ~ dnorm(0, 0.00001)I(, -0.00001)
-		beta ~ dnorm(0, 0.00001)I(, -0.00001)
+		alpha ~ dnorm(0, 0.00001)T(, -0.00001)
+		beta ~ dnorm(0, 0.00001)T(, -0.00001)
 		A <- exp(alpha)
 		B <- exp(beta)
 	}
