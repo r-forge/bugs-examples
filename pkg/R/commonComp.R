@@ -62,6 +62,8 @@ fixTruncation <- function(modelFile, pattern)
 
 runWinBUGS <- function(modelFile, modelData, inits, example, n.chains)
 {
+    require("R2WinBUGS")
+    
     wkDir <- file.path(getwd(), "WinBUGS", example$name)
     unlink(wkDir, recursive=TRUE)
     dir.create(wkDir, showWarnings=FALSE)
@@ -159,6 +161,8 @@ dojags <- function(modelFile, modelData, inits, example, n.chains)
 
 runJAGS <- function(modelFile, modelData, inits, example, n.chains)
 {
+    require(rjags)
+    
     modelFile <- fixTruncation(modelFile, example$name)
     if (any(example$parameters == "deviance")) {
         load.module("dic")
@@ -167,6 +171,27 @@ runJAGS <- function(modelFile, modelData, inits, example, n.chains)
     runtime <- system.time(out.coda <- dojags(modelFile, modelData, inits,
                                               example, n.chains))
     return(list("coda" = out.coda, "runtime" = runtime, engine="JAGS",
+                name = example$name))
+}
+
+runBRugs <- function(modelFile, modelData, inits, example, n.chains)
+{
+    require(BRugs)
+    
+    wkDir <- file.path(getwd(), "BRugs", example$name)
+    
+    modelFile <- fixDirichlet(modelFile, example$name)
+    runtime <- system.time(out.coda <- BRugsFit(modelFile, modelData, inits,
+                                                numChains = n.chains,
+                                                parameters = example$parameters,
+                                                nBurnin = example$nBurnin,
+                                                nThin = example$nThin,
+                                                coda = TRUE,
+                                                DIC = FALSE,
+                                                working.directory = wkDir,
+                                                nIter = example$nSample)
+                           )
+    return(list("coda" = out.coda, "runtime" = runtime, engine="BRugs",
                 name = example$name))
 }
 
@@ -261,7 +286,8 @@ runOpenBUGS <- function(modelFile, modelData, inits, example, n.chains)
                 "name" = example$name))
 }
 
-runExample <- function(example, engine=c("OpenBUGS", "WinBUGS", "JAGS"), exDir)
+runExample <- function(example,
+                       engine=c("OpenBUGS", "WinBUGS", "JAGS", "BRugs"), exDir)
 {
     engine <- match.arg(engine)
 
@@ -298,7 +324,8 @@ runExample <- function(example, engine=c("OpenBUGS", "WinBUGS", "JAGS"), exDir)
     switch(engine,
            "WinBUGS"=runWinBUGS(modelFile, dataFile, inits, example, 1),
            "OpenBUGS"=runOpenBUGS(modelFile, dataFile, inits, example, 1),
-           "JAGS"=runJAGS(modelFile, dataFile, inits, example, 1)
+           "JAGS"=runJAGS(modelFile, dataFile, inits, example, 1),
+           "BRugs"=runBRugs(modelFile, dataFile, inits, example, 1)
            )
 }
 

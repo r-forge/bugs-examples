@@ -10,4 +10,5 @@ Description: Allows different MCMC engines using the BUGS language to
 License: GPL (==2)
 LazyLoad: yes
 LazyData: yes
-Depends: coda, R2WinBUGS, rjags
+Depends: coda
+Suggests: R2WinBUGS, rjags, BRugs
